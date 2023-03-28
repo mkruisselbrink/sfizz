@@ -366,8 +366,10 @@ private:
     void loadingJob(const QueuedFileData& data) noexcept;
     std::mutex loadingJobsMutex;
     std::vector<std::future<void>> loadingJobs;
+#if !defined(__EMSCRIPTEN__)
     std::thread dispatchThread { &FilePool::dispatchingJob, this };
     std::thread garbageThread { &FilePool::garbageJob, this };
+#endif
 
     SpinMutex garbageAndLastUsedMutex;
     std::vector<FileId> lastUsedFiles;

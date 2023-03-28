@@ -36,6 +36,11 @@ static inline void spin_loop_pause() noexcept {
 #endif
 }
 } // namespace atomic_queue
+#elif defined(__EMSCRIPTEN__)
+namespace atomic_queue {
+constexpr int CACHE_LINE_SIZE = 64;
+static inline void spin_loop_pause() noexcept {}
+} // namespace atomic_queue
 #else
 #error "Unknown CPU architecture."
 #endif

@@ -141,8 +141,10 @@ void streamFromFile(sfz::AudioReader& reader, sfz::FileAudioBuffer& output, std:
 }
 
 sfz::FilePool::FilePool()
-    : filesToLoad(alignedNew<FileQueue>()),
-      threadPool(globalThreadPool())
+    : filesToLoad(alignedNew<FileQueue>())
+#if !defined(__EMSCRIPTEN__)
+    , threadPool(globalThreadPool())
+#endif
 {
     loadingJobs.reserve(config::maxVoices);
     lastUsedFiles.reserve(config::maxVoices);
@@ -155,11 +157,15 @@ sfz::FilePool::~FilePool()
 
     garbageFlag = false;
     semGarbageBarrier.post(ec);
+#if !defined(__EMSCRIPTEN__)
     garbageThread.join();
+#endif
 
     dispatchFlag = false;
     dispatchBarrier.post(ec);
+#if !defined(__EMSCRIPTEN__)
     dispatchThread.join();
+#endif
 
     for (auto& job : loadingJobs)
         job.wait();
@@ -584,6 +590,7 @@ void sfz::FilePool::raiseCurrentThreadPriority() noexcept
         DBG("[sfizz] Cannot set current thread priority: " << error.what());
     }
 #else
+#ifndef __EMSCRIPTEN__ 
     pthread_t thread = pthread_self();
     int policy;
     sched_param param;
@@ -602,6 +609,7 @@ void sfz::FilePool::raiseCurrentThreadPriority() noexcept
         DBG("[sfizz] Cannot set current thread scheduling parameters");
         return;
     }
+#endif
 #endif
 }
 
